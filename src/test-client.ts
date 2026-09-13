@@ -1,4 +1,4 @@
-﻿import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 async function runMcpSmokeTest(): Promise<void> {
@@ -36,6 +36,19 @@ async function runMcpSmokeTest(): Promise<void> {
   });
   console.log("\nResultado de `list_transactions`:");
   console.dir(transactionsResponse, { depth: null });
+
+  console.log("\nEjecutando tool `create_expense`...");
+  const createExpenseResponse = await client.callTool({
+    name: "create_expense",
+    arguments: {
+      account: "Efectivo",
+      amount: 15.5,
+      category: "Comida",
+      description: "Prueba automatizada de gasto",
+    },
+  });
+  console.log("\nResultado de `create_expense`:");
+  console.dir(createExpenseResponse, { depth: null });
 
   await client.close();
   console.log("\nPrueba completada correctamente.");

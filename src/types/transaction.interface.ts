@@ -1,4 +1,4 @@
-﻿export type TransactionType = "EXPENSE" | "INCOME" | "TRANSFER";
+export type TransactionType = "EXPENSE" | "INCOME" | "TRANSFER";
 
 export interface TransactionAccountSummary {
   readonly id: string;
@@ -46,3 +46,16 @@ export interface TransactionsResponse {
   readonly data: Transaction[];
   readonly total: number;
 }
+
+/**
+ * Payload requerido por la API para registrar una transacción.
+ */
+export interface CreateTransactionPayload {
+  readonly accountId: string;
+  readonly type: TransactionType;
+  readonly amount: number;
+  readonly categoryId?: string;
+  readonly destinationAccountId?: string;
+  readonly transactionDate?: string;
+  readonly description?: string;
+}

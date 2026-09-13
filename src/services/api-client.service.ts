@@ -1,7 +1,10 @@
-﻿import axios, { isAxiosError, type AxiosInstance } from "axios";
+import axios, { isAxiosError, type AxiosInstance } from "axios";
 import { ENV_CONFIG } from "../config/env.config.js";
 import type { Account } from "../types/account.interface.js";
+import type { Category, CategoryType } from "../types/category.interface.js";
 import type {
+  CreateTransactionPayload,
+  Transaction,
   TransactionsQueryOptions,
   TransactionsResponse,
 } from "../types/transaction.interface.js";
@@ -71,6 +74,55 @@ export class ApiClientService {
     } catch (error: unknown) {
       throw new Error(
         this.formatErrorMessage(error, "Fallo al consultar las transacciones")
+      );
+    }
+  }
+
+  /**
+   * Obtiene la lista de categorías activas, opcionalmente filtradas por tipo.
+   */
+  async fetchCategories(type?: CategoryType): Promise<Category[]> {
+    const token = this.getValidToken();
+
+    try {
+      const response = await this.client.get<Category[]>("/categories", {
+        params: type ? { type } : undefined,
+        headers: {
+          "X-API-KEY": token,
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al consultar las categorías")
+      );
+    }
+  }
+
+  /**
+   * Registra una nueva transacción financiera (gasto, ingreso o transferencia).
+   */
+  async createTransaction(
+    payload: CreateTransactionPayload
+  ): Promise<Transaction> {
+    const token = this.getValidToken();
+
+    try {
+      const response = await this.client.post<Transaction>(
+        "/transactions",
+        payload,
+        {
+          headers: {
+            "X-API-KEY": token,
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al registrar la transacción")
       );
     }
   }

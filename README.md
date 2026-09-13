@@ -1,4 +1,4 @@
-﻿# 🤖 Finance Manager - Servidor MCP
+# 🤖 Finance Manager - Servidor MCP
 
 Servidor basado en el estándar **Model Context Protocol (MCP)** para permitir que asistentes de Inteligencia Artificial (Antigravity, Claude Desktop, Cursor, etc.) interactúen con la plataforma **Finance Manager Suite**.
 
@@ -46,6 +46,17 @@ npm run build
   - `limit` (number, 1-100): Cantidad máxima de registros (por defecto 20).
   - `offset` (number): Desplazamiento para paginación.
 - **Respuesta:** Objeto JSON con `total`, `returnedCount` y el listado de transacciones formateadas (`id`, `type`, `amount`, `currency`, `date`, `account`, `category`, `destinationAccount`, `description`).
+
+### 3. `create_expense`
+- **Descripción:** Registra un nuevo gasto financiero deduciendo el saldo de la cuenta especificada. Admite resolución inteligente por UUID o por nombre tanto para cuentas como para categorías.
+- **Argumentos obligatorios:**
+  - `account` (string): Nombre o UUID de la cuenta financiera donde se debita el gasto (ej. `"Efectivo"`, `"Nómina"` o UUID).
+  - `amount` (number): Monto numérico del gasto (mayor a 0).
+- **Argumentos opcionales:**
+  - `category` (string): Nombre o UUID de la categoría del gasto (ej. `"Comida"`, `"Transporte"` o UUID).
+  - `description` (string): Concepto, nota o detalle descriptivo del gasto.
+  - `date` (string, ISO o YYYY-MM-DD): Fecha de la transacción (por defecto fecha actual).
+- **Respuesta:** Objeto JSON de confirmación con `success: true`, mensaje resumen, y los datos completos del movimiento registrado incluyendo saldos (`previousBalance`, `newBalance`).
 
 ---
 

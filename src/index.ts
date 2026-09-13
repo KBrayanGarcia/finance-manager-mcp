@@ -1,8 +1,9 @@
-﻿import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ApiClientService } from "./services/api-client.service.js";
 import { registerGetAccountBalancesTool } from "./tools/get-account-balances.tool.js";
 import { registerListTransactionsTool } from "./tools/list-transactions.tool.js";
+import { registerCreateExpenseTool } from "./tools/create-expense.tool.js";
 
 async function bootstrapServer(): Promise<void> {
   const apiClient = new ApiClientService();
@@ -14,6 +15,7 @@ async function bootstrapServer(): Promise<void> {
 
   registerGetAccountBalancesTool(server, apiClient);
   registerListTransactionsTool(server, apiClient);
+  registerCreateExpenseTool(server, apiClient);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
