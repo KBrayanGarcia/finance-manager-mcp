@@ -36,6 +36,17 @@ npm run build
 - **Argumentos:** Ninguno.
 - **Respuesta:** Objeto JSON con `totalBalance`, `totalAccounts` y el detalle de cada cuenta (`id`, `name`, `type`, `currency`, `currentBalance`, `isActive`).
 
+### 2. `list_transactions`
+- **Descripción:** Consulta el historial de movimientos o transacciones financieras del usuario, permitiendo filtrar por tipo, cuenta y rango de fechas.
+- **Argumentos opcionales:**
+  - `accountId` (string, UUID): Filtrar movimientos de una cuenta específica.
+  - `type` (enum): Tipo de movimiento (`"EXPENSE"`, `"INCOME"`, `"TRANSFER"`).
+  - `startDate` (string, ISO o YYYY-MM-DD): Fecha inicial del rango.
+  - `endDate` (string, ISO o YYYY-MM-DD): Fecha final del rango.
+  - `limit` (number, 1-100): Cantidad máxima de registros (por defecto 20).
+  - `offset` (number): Desplazamiento para paginación.
+- **Respuesta:** Objeto JSON con `total`, `returnedCount` y el listado de transacciones formateadas (`id`, `type`, `amount`, `currency`, `date`, `account`, `category`, `destinationAccount`, `description`).
+
 ---
 
 ## 🔌 Cómo conectarlo con Clientes MCP

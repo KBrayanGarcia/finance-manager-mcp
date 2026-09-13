@@ -1,4 +1,4 @@
-import { Client } from "@modelcontextprotocol/sdk/client/index.js";
+ï»¿import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 
 async function runMcpSmokeTest(): Promise<void> {
@@ -15,20 +15,27 @@ async function runMcpSmokeTest(): Promise<void> {
   );
 
   await client.connect(transport);
-  console.log("Cliente conectado con éxito al servidor MCP.");
+  console.log("Cliente conectado con Ã©xito al servidor MCP.");
 
   const toolsResponse = await client.listTools();
   console.log("\nHerramientas disponibles en el servidor:");
   console.dir(toolsResponse.tools, { depth: null });
 
   console.log("\nEjecutando tool `get_account_balances`...");
-  const callResponse = await client.callTool({
+  const balancesResponse = await client.callTool({
     name: "get_account_balances",
     arguments: {},
   });
+  console.log("\nResultado de `get_account_balances`:");
+  console.dir(balancesResponse, { depth: null });
 
-  console.log("\nResultado de la ejecución:");
-  console.dir(callResponse, { depth: null });
+  console.log("\nEjecutando tool `list_transactions` (con limit = 5)...");
+  const transactionsResponse = await client.callTool({
+    name: "list_transactions",
+    arguments: { limit: 5 },
+  });
+  console.log("\nResultado de `list_transactions`:");
+  console.dir(transactionsResponse, { depth: null });
 
   await client.close();
   console.log("\nPrueba completada correctamente.");
@@ -38,4 +45,3 @@ runMcpSmokeTest().catch((error: unknown) => {
   console.error("Fallo durante la prueba:", error);
   process.exit(1);
 });
-

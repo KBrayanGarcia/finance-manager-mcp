@@ -1,6 +1,10 @@
 ﻿import axios, { isAxiosError, type AxiosInstance } from "axios";
 import { ENV_CONFIG } from "../config/env.config.js";
 import type { Account } from "../types/account.interface.js";
+import type {
+  TransactionsQueryOptions,
+  TransactionsResponse,
+} from "../types/transaction.interface.js";
 
 function normalizeBaseUrl(rawUrl: string): string {
   const trimmed = rawUrl.trim().replace(/\/+$/, "");
@@ -40,6 +44,33 @@ export class ApiClientService {
     } catch (error: unknown) {
       throw new Error(
         this.formatErrorMessage(error, "Fallo al consultar las cuentas")
+      );
+    }
+  }
+
+  /**
+   * Obtiene la lista de transacciones del usuario aplicando filtros opcionales.
+   */
+  async fetchTransactions(
+    options: TransactionsQueryOptions = {}
+  ): Promise<TransactionsResponse> {
+    const token = this.getValidToken();
+
+    try {
+      const response = await this.client.get<TransactionsResponse>(
+        "/transactions",
+        {
+          params: options,
+          headers: {
+            "X-API-KEY": token,
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al consultar las transacciones")
       );
     }
   }

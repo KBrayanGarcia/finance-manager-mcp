@@ -1,7 +1,8 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+﻿import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { ApiClientService } from "./services/api-client.service.js";
 import { registerGetAccountBalancesTool } from "./tools/get-account-balances.tool.js";
+import { registerListTransactionsTool } from "./tools/list-transactions.tool.js";
 
 async function bootstrapServer(): Promise<void> {
   const apiClient = new ApiClientService();
@@ -12,17 +13,17 @@ async function bootstrapServer(): Promise<void> {
   });
 
   registerGetAccountBalancesTool(server, apiClient);
+  registerListTransactionsTool(server, apiClient);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
   console.error("🚀 Finance Manager MCP Server iniciado exitosamente.");
   console.error("📡 Transporte: stdio (Entrada/Salida estándar)");
-  console.error("ℹ️  IP / Puerto: N/A (Comunicación directa entre procesos, no expone socket de red)");
+  console.error("🌐 IP / Puerto: N/A (Comunicación directa entre procesos, no expone socket de red)");
 }
 
 bootstrapServer().catch((error: unknown) => {
-  console.error("? Error al inicializar el servidor MCP:", error);
+  console.error("❌ Error al inicializar el servidor MCP:", error);
   process.exit(1);
 });
-
