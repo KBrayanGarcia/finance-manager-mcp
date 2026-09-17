@@ -1,32 +1,32 @@
-﻿{
-    "name":  "finance-manager-mcp",
-    "version":  "1.0.0",
-    "type":  "module",
-    "description":  "Servidor MCP para Finance Manager Suite",
-    "main":  "dist/index.js",
-    "scripts":  {
-                    "build":  "tsc",
-                    "start":  "node dist/index.js",
-                    "dev":  "tsx src/index.ts",
-                    "test":  "tsx src/test-client.ts",
-                    "inspector":  "npx @modelcontextprotocol/inspector node dist/index.js"
-                },
-    "keywords":  [
-                     "mcp",
-                     "model-context-protocol",
-                     "finance"
-                 ],
-    "author":  "",
-    "license":  "ISC",
-    "dependencies":  {
-                         "@modelcontextprotocol/sdk":  "^1.30.0",
-                         "axios":  "^1.20.0",
-                         "dotenv":  "^17.4.2",
-                         "zod":  "^4.6.2"
-                     },
-    "devDependencies":  {
-                            "@types/node":  "^22.20.2",
-                            "tsx":  "^4.23.13",
-                            "typescript":  "^5.4.5"
-                        }
+{
+  "name": "finance-manager-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Servidor MCP para Finance Manager Suite",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "test": "tsx src/test-client.ts",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "finance"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "axios": "^1.20.0",
+    "dotenv": "^17.4.2",
+    "zod": "^4.6.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "tsx": "^4.23.13",
+    "typescript": "^5.4.5"
+  }
 }
