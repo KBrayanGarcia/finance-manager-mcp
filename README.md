@@ -58,6 +58,17 @@ npm run build
   - `date` (string, ISO o YYYY-MM-DD): Fecha de la transacción (por defecto fecha actual).
 - **Respuesta:** Objeto JSON de confirmación con `success: true`, mensaje resumen, y los datos completos del movimiento registrado incluyendo saldos (`previousBalance`, `newBalance`).
 
+### 4. `create_income`
+- **Descripción:** Registra un nuevo ingreso financiero abonando el saldo a la cuenta especificada. Admite resolución inteligente por UUID o por nombre tanto para cuentas como para categorías.
+- **Argumentos obligatorios:**
+  - `account` (string): Nombre o UUID de la cuenta financiera donde se abona el ingreso (ej. `"Efectivo"`, `"Tarjeta Débito"`, `"Nómina"` o UUID).
+  - `amount` (number): Monto numérico del ingreso (mayor a 0).
+- **Argumentos opcionales:**
+  - `category` (string): Nombre o UUID de la categoría del ingreso (ej. `"Sueldo"`, `"Ventas"`, `"Inversiones"` o UUID).
+  - `description` (string): Concepto, nota o detalle descriptivo del ingreso.
+  - `date` (string, ISO o YYYY-MM-DD): Fecha de la transacción (por defecto fecha actual).
+- **Respuesta:** Objeto JSON de confirmación con `success: true`, mensaje resumen, y los datos completos del movimiento registrado incluyendo saldos (`previousBalance`, `newBalance`).
+
 ---
 
 ## 🔌 Cómo conectarlo con Clientes MCP

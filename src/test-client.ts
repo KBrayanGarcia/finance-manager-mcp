@@ -50,6 +50,18 @@ async function runMcpSmokeTest(): Promise<void> {
   console.log("\nResultado de `create_expense`:");
   console.dir(createExpenseResponse, { depth: null });
 
+  console.log("\nEjecutando tool `create_income`...");
+  const createIncomeResponse = await client.callTool({
+    name: "create_income",
+    arguments: {
+      account: "Efectivo",
+      amount: 100.0,
+      description: "Prueba automatizada de ingreso",
+    },
+  });
+  console.log("\nResultado de `create_income`:");
+  console.dir(createIncomeResponse, { depth: null });
+
   await client.close();
   console.log("\nPrueba completada correctamente.");
 }

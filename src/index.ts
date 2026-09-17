@@ -4,6 +4,7 @@ import { ApiClientService } from "./services/api-client.service.js";
 import { registerGetAccountBalancesTool } from "./tools/get-account-balances.tool.js";
 import { registerListTransactionsTool } from "./tools/list-transactions.tool.js";
 import { registerCreateExpenseTool } from "./tools/create-expense.tool.js";
+import { registerCreateIncomeTool } from "./tools/create-income.tool.js";
 
 async function bootstrapServer(): Promise<void> {
   const apiClient = new ApiClientService();
@@ -16,6 +17,7 @@ async function bootstrapServer(): Promise<void> {
   registerGetAccountBalancesTool(server, apiClient);
   registerListTransactionsTool(server, apiClient);
   registerCreateExpenseTool(server, apiClient);
+  registerCreateIncomeTool(server, apiClient);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
