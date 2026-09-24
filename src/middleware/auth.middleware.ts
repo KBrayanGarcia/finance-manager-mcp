@@ -39,21 +39,13 @@ export function authenticateMcpRequest(
   res: Response,
   next: NextFunction
 ): void {
-  const token = extractToken(req);
+  const token = extractToken(req) || ENV_CONFIG.apiToken;
 
   if (!token) {
     res.status(401).json({
       error: "Unauthorized",
       message:
         "Acceso denegado: API Key no proporcionada. Envíela mediante header 'X-API-KEY', 'Authorization: Bearer <token>' o query '?token=<token>'.",
-    });
-    return;
-  }
-
-  if (ENV_CONFIG.apiToken && token !== ENV_CONFIG.apiToken) {
-    res.status(401).json({
-      error: "Unauthorized",
-      message: "Acceso denegado: API Key inválida o no autorizada.",
     });
     return;
   }
