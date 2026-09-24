@@ -22,6 +22,9 @@ async function handleSseConnection(
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> {
+  // Configurar cabecera de deshabilitación de buffer para streaming SSE en Vercel y proxies inversos
+  res.setHeader("X-Accel-Buffering", "no");
+
   const messageEndpoint = req.apiToken
     ? `/messages?token=${encodeURIComponent(req.apiToken)}`
     : "/messages";
@@ -76,9 +79,24 @@ async function handlePostMessage(
  * Configura y retorna la aplicación Express para el servidor MCP.
  */
 export function buildMcpExpressApp(): Express {
-  const app = createMcpExpressApp({ host: "127.0.0.1" });
+  // En Vercel / producción se desactiva la restricción de localhost para permitir dominios remotos
+  const isServerless = Boolean(process.env.VERCEL);
+  const app = createMcpExpressApp({ host: isServerless ? "0.0.0.0" : "127.0.0.1" });
 
   app.use(cors());
+
+  app.get("/", (_req, res) => {
+    res.json({
+      name: "finance-manager-mcp",
+      status: "online",
+      description: "Finance Manager MCP Server (SSE Transport)",
+      endpoints: {
+        health: "/health",
+        sse: "/sse",
+        messages: "/messages",
+      },
+    });
+  });
 
   app.get("/health", (_req, res) => {
     res.json({
@@ -125,7 +143,20 @@ export function startSseServer(port: number = ENV_CONFIG.port): void {
   });
 }
 
-// Iniciar automáticamente cuando se ejecute directamente
-if (process.env.NODE_ENV !== "test") {
+/**
+ * Valida si se debe iniciar el servidor de manera autónoma.
+ */
+function shouldAutoStart(): boolean {
+  if (Boolean(process.env.VERCEL)) {
+    return false;
+  }
+  if (process.env.NODE_ENV === "test") {
+    return false;
+  }
+  return true;
+}
+
+// Iniciar automáticamente solo cuando no se encuentre en entorno serverless o tests
+if (shouldAutoStart()) {
   startSseServer();
 }

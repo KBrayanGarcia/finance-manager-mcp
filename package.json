@@ -3,17 +3,18 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Servidor MCP para Finance Manager Suite",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/server.js",
-    "start:stdio": "node dist/index.js",
+    "start": "node dist/src/server.js",
+    "start:stdio": "node dist/src/index.js",
     "dev": "tsx src/server.ts",
     "dev:stdio": "tsx src/index.ts",
     "test": "tsx src/test-sse-client.ts",
     "test:stdio": "tsx src/test-client.ts",
     "test:sse": "tsx src/test-sse-client.ts",
-    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "test:sse:remote": "tsx src/test-sse-client.ts --url",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/src/index.js",
     "inspector:sse": "npx @modelcontextprotocol/inspector"
   },
   "keywords": [
