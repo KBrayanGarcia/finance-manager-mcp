@@ -2,6 +2,10 @@
 
 Servidor basado en el estándar **Model Context Protocol (MCP)** para permitir que asistentes de Inteligencia Artificial (Antigravity, Claude Desktop, Cursor, etc.) interactúen con la plataforma **Finance Manager Suite**.
 
+Soporta dos modalidades de transporte:
+1. **SSE / HTTP (Recomendado):** Servidor web Express con streaming Server-Sent Events y autenticación dual (Headers o Query Param).
+2. **stdio (Entrada / Salida estándar):** Para ejecución local directa como subproceso.
+
 ---
 
 ## 📋 Requisitos Previos
@@ -19,12 +23,37 @@ Servidor basado en el estándar **Model Context Protocol (MCP)** para permitir q
 API_BASE_URL=http://localhost:3000/api/v1
 # Personal Access Token generado en el perfil de usuario (fm_live_...)
 API_TOKEN=fm_live_tu_clave_aqui
+PORT=3001
 ```
 
 2. Instala dependencias y compila el proyecto:
 ```bash
 npm install
 npm run build
+```
+
+---
+
+## 🚀 Modos de Ejecución
+
+### 1. Servidor SSE / HTTP
+Inicia el servidor Express en el puerto configurado (por defecto `3001`):
+```bash
+# Modo desarrollo (con recarga automática)
+npm run dev
+
+# Modo producción compilado
+npm run start
+```
+
+Endpoints disponibles:
+- `GET /health`: Estado y número de sesiones activas.
+- `GET /sse?token=fm_live_...`: Handshake y canal de streaming de eventos.
+- `POST /messages?sessionId=...`: Recepción de comandos JSON-RPC 2.0.
+
+### 2. Modo stdio
+```bash
+npm run start:stdio
 ```
 
 ---
@@ -56,7 +85,6 @@ npm run build
   - `category` (string): Nombre o UUID de la categoría del gasto (ej. `"Comida"`, `"Transporte"` o UUID).
   - `description` (string): Concepto, nota o detalle descriptivo del gasto.
   - `date` (string, ISO o YYYY-MM-DD): Fecha de la transacción (por defecto fecha actual).
-- **Respuesta:** Objeto JSON de confirmación con `success: true`, mensaje resumen, y los datos completos del movimiento registrado incluyendo saldos (`previousBalance`, `newBalance`).
 
 ### 4. `create_income`
 - **Descripción:** Registra un nuevo ingreso financiero abonando el saldo a la cuenta especificada. Admite resolución inteligente por UUID o por nombre tanto para cuentas como para categorías.
@@ -67,41 +95,34 @@ npm run build
   - `category` (string): Nombre o UUID de la categoría del ingreso (ej. `"Sueldo"`, `"Ventas"`, `"Inversiones"` o UUID).
   - `description` (string): Concepto, nota o detalle descriptivo del ingreso.
   - `date` (string, ISO o YYYY-MM-DD): Fecha de la transacción (por defecto fecha actual).
-- **Respuesta:** Objeto JSON de confirmación con `success: true`, mensaje resumen, y los datos completos del movimiento registrado incluyendo saldos (`previousBalance`, `newBalance`).
+
+### 5. `transfer_funds`
+- **Descripción:** Ejecuta una transferencia financiera atómica entre dos cuentas del usuario. Deduce los fondos de la cuenta origen y los acredita en la cuenta destino.
+- **Argumentos obligatorios:**
+  - `fromAccount` (string): Nombre o UUID de la cuenta financiera origen.
+  - `toAccount` (string): Nombre o UUID de la cuenta financiera destino.
+  - `amount` (number): Monto a transferir (mayor a 0).
+- **Argumentos opcionales:**
+  - `description` (string): Concepto descriptivo.
+  - `date` (string, ISO o YYYY-MM-DD): Fecha de la transferencia.
 
 ---
 
-## 🔌 Cómo conectarlo con Clientes MCP
+## 🧪 Pruebas y Validación
 
-### Antigravity, Cursor o Claude Desktop
-En el archivo de configuración `claude_desktop_config.json` o configuración de MCP:
-
-```json
-{
-  "mcpServers": {
-    "finance-manager": {
-      "command": "node",
-      "args": [
-        "/ruta/absoluta/a/wallet server mcp/dist/index.js"
-      ],
-      "env": {
-        "API_BASE_URL": "http://localhost:3000/api/v1",
-        "API_TOKEN": "fm_live_tu_clave_aqui"
-      }
-    }
-  }
-}
-```
-
----
-
-## 🧪 Pruebas Locales
-
-- **Con MCP Inspector:**
+### Validación con MCP Inspector (Navegador)
 ```bash
-npm run inspector
+npm run inspector:sse
 ```
-- **Smoke test programático:**
+En el inspector, selecciona el transporte **SSE** e ingresa la URL:
+`http://localhost:3001/sse?token=fm_live_tu_clave_aqui`
+
+### Pruebas Automatizadas
+- **Prueba SSE automatizada:**
 ```bash
-npm test
+npm run test:sse
+```
+- **Prueba stdio:**
+```bash
+npm run test:stdio
 ```

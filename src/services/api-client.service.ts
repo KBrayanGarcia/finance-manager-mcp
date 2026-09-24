@@ -21,7 +21,7 @@ function normalizeBaseUrl(rawUrl: string): string {
 export class ApiClientService {
   private readonly client: AxiosInstance;
 
-  constructor() {
+  constructor(private readonly customToken?: string) {
     this.client = axios.create({
       baseURL: normalizeBaseUrl(ENV_CONFIG.apiBaseUrl),
       headers: {
@@ -128,10 +128,10 @@ export class ApiClientService {
   }
 
   private getValidToken(): string {
-    const token = ENV_CONFIG.apiToken;
+    const token = this.customToken || ENV_CONFIG.apiToken;
     if (!token) {
       console.error(
-        "[Finance Manager MCP] Falta configurar API_TOKEN en las variables de entorno."
+        "[Finance Manager MCP] Falta configurar API_TOKEN en las variables de entorno o en la sesión."
       );
       throw new Error(
         "No fue posible autenticar con el servicio de Finance Manager. Falta configurar el token de acceso."

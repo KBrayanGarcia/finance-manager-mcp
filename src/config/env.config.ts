@@ -1,10 +1,11 @@
-﻿import dotenv from "dotenv";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 export interface EnvironmentConfig {
   readonly apiBaseUrl: string;
   readonly apiToken: string;
+  readonly port: number;
 }
 
 export const ENV_CONFIG: EnvironmentConfig = {
@@ -12,4 +13,5 @@ export const ENV_CONFIG: EnvironmentConfig = {
   get apiToken(): string {
     return process.env.API_TOKEN || process.env.WALLET_API_KEY || "";
   },
+  port: Number(process.env.PORT) || 3001,
 };

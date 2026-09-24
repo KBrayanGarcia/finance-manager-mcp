@@ -1,25 +1,10 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { createMcpServer } from "./factory/mcp-server.factory.js";
 import { ApiClientService } from "./services/api-client.service.js";
-import { registerGetAccountBalancesTool } from "./tools/get-account-balances.tool.js";
-import { registerListTransactionsTool } from "./tools/list-transactions.tool.js";
-import { registerCreateExpenseTool } from "./tools/create-expense.tool.js";
-import { registerCreateIncomeTool } from "./tools/create-income.tool.js";
-import { registerTransferFundsTool } from "./tools/transfer-funds.tool.js";
 
-async function bootstrapServer(): Promise<void> {
+async function bootstrapStdioServer(): Promise<void> {
   const apiClient = new ApiClientService();
-
-  const server = new McpServer({
-    name: "finance-manager-mcp",
-    version: "1.0.0",
-  });
-
-  registerGetAccountBalancesTool(server, apiClient);
-  registerListTransactionsTool(server, apiClient);
-  registerCreateExpenseTool(server, apiClient);
-  registerCreateIncomeTool(server, apiClient);
-  registerTransferFundsTool(server, apiClient);
+  const server = createMcpServer(apiClient);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
@@ -29,7 +14,7 @@ async function bootstrapServer(): Promise<void> {
   console.error("🌐 IP / Puerto: N/A (Comunicación directa entre procesos, no expone socket de red)");
 }
 
-bootstrapServer().catch((error: unknown) => {
-  console.error("❌ Error al inicializar el servidor MCP:", error);
+bootstrapStdioServer().catch((error: unknown) => {
+  console.error("❌ Error al inicializar el servidor MCP en modo stdio:", error);
   process.exit(1);
 });
