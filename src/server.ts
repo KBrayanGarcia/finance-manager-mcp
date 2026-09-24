@@ -1,4 +1,5 @@
 import cors from "cors";
+import type { Express, Response } from "express";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
 import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
 import { ENV_CONFIG } from "./config/env.config.js";
@@ -19,7 +20,7 @@ const activeSessions = new Map<string, SSEServerTransport>();
  */
 async function handleSseConnection(
   req: AuthenticatedRequest,
-  res: import("express").Response
+  res: Response
 ): Promise<void> {
   const messageEndpoint = req.apiToken
     ? `/messages?token=${encodeURIComponent(req.apiToken)}`
@@ -46,7 +47,7 @@ async function handleSseConnection(
  */
 async function handlePostMessage(
   req: AuthenticatedRequest,
-  res: import("express").Response
+  res: Response
 ): Promise<void> {
   const rawSessionId = req.query["sessionId"];
   const sessionId = typeof rawSessionId === "string" ? rawSessionId : undefined;
@@ -74,7 +75,7 @@ async function handlePostMessage(
 /**
  * Configura y retorna la aplicación Express para el servidor MCP.
  */
-export function buildMcpExpressApp(): import("express").Express {
+export function buildMcpExpressApp(): Express {
   const app = createMcpExpressApp({ host: "127.0.0.1" });
 
   app.use(cors());
