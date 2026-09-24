@@ -1,7 +1,7 @@
 import cors from "cors";
 import type { Express, Response } from "express";
 import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { ENV_CONFIG } from "./config/env.config.js";
 import { createMcpServer } from "./factory/mcp-server.factory.js";
 import {
@@ -11,95 +11,84 @@ import {
 import { ApiClientService } from "./services/api-client.service.js";
 
 /**
- * Almacén en memoria para rastrear y enrutar las sesiones de transporte SSE activas.
+ * Normaliza la cabecera 'Accept' para asegurar compatibilidad con la especificación Streamable HTTP MCP.
  */
-const activeSessions = new Map<string, SSEServerTransport>();
+function normalizeAcceptHeader(req: AuthenticatedRequest): void {
+  const accept = req.headers.accept;
+  if (!accept || accept === "*/*") {
+    req.headers.accept = "application/json, text/event-stream";
+    return;
+  }
+
+  if (accept.includes("application/json") && !accept.includes("text/event-stream")) {
+    req.headers.accept = `${accept}, text/event-stream`;
+  }
+}
 
 /**
- * Registra y gestiona el ciclo de vida de una nueva conexión SSE.
+ * Procesa peticiones HTTP (GET, POST, DELETE) mediante el transporte oficial Streamable HTTP sin estado.
  */
-async function handleSseConnection(
+async function handleStreamableHttpRequest(
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> {
-  // Configurar cabeceras de deshabilitación de buffer para streaming SSE en Vercel y proxies inversos
+  normalizeAcceptHeader(req);
+
   res.setHeader("X-Accel-Buffering", "no");
   res.setHeader("Cache-Control", "no-cache, no-transform");
 
-  const isApiPath = req.path.startsWith("/api");
-  const baseMessagePath = isApiPath ? "/api/messages" : "/messages";
-  const messageEndpoint = req.apiToken
-    ? `${baseMessagePath}?token=${encodeURIComponent(req.apiToken)}`
-    : baseMessagePath;
-  const transport = new SSEServerTransport(messageEndpoint, res);
-  const sessionId = transport.sessionId;
-
-  activeSessions.set(sessionId, transport);
-  console.log(`[MCP Server] Nueva sesión SSE establecida: ${sessionId}`);
-
-  transport.onclose = () => {
-    console.log(`[MCP Server] Sesión SSE cerrada: ${sessionId}`);
-    activeSessions.delete(sessionId);
-  };
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  });
 
   const apiClient = new ApiClientService(req.apiToken);
   const server = createMcpServer(apiClient);
 
   await server.connect(transport);
+  await transport.handleRequest(req, res, req.body);
 }
 
 /**
- * Enruta los mensajes POST JSON-RPC hacia el transporte SSE correspondiente a la sesión.
- */
-async function handlePostMessage(
-  req: AuthenticatedRequest,
-  res: Response
-): Promise<void> {
-  const rawSessionId = req.query["sessionId"];
-  const sessionId = typeof rawSessionId === "string" ? rawSessionId : undefined;
-
-  if (!sessionId) {
-    res.status(400).json({
-      error: "Bad Request",
-      message: "El parámetro de consulta 'sessionId' es obligatorio.",
-    });
-    return;
-  }
-
-  const transport = activeSessions.get(sessionId);
-  if (!transport) {
-    res.status(404).json({
-      error: "Not Found",
-      message: `No se encontró una sesión activa para el ID: ${sessionId}`,
-    });
-    return;
-  }
-
-  await transport.handlePostMessage(req, res, req.body);
-}
-
-/**
- * Configura y retorna la aplicación Express para el servidor MCP.
+ * Configura y retorna la aplicación Express para el servidor MCP con soporte Streamable HTTP.
  */
 export function buildMcpExpressApp(): Express {
-  // En Vercel / producción se desactiva la restricción de localhost para permitir dominios remotos
   const isServerless =
     Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
+
   const app = createMcpExpressApp({
     host: isServerless ? "0.0.0.0" : "127.0.0.1",
   });
 
   app.use(cors());
 
-  app.get(["/", "/api"], (_req, res) => {
+  app.get(["/", "/api"], (req, res) => {
+    const isSseStreamRequest = Boolean(
+      req.headers.accept && req.headers.accept.includes("text/event-stream")
+    );
+
+    if (isSseStreamRequest) {
+      authenticateMcpRequest(req as AuthenticatedRequest, res, () => {
+        handleStreamableHttpRequest(req as AuthenticatedRequest, res).catch(
+          (error: unknown) => {
+            console.error("[MCP Server] Error en stream SSE raíz:", error);
+            if (!res.headersSent) {
+              res.status(500).json({ error: "Fallo en conexión SSE raíz" });
+            }
+          }
+        );
+      });
+      return;
+    }
+
     res.json({
       name: "finance-manager-mcp",
       status: "online",
-      description: "Finance Manager MCP Server (SSE Transport)",
+      description: "Finance Manager MCP Server (Streamable HTTP Transport)",
+      transport: "streamable-http",
       endpoints: {
+        mcp: "/mcp",
         health: "/health",
-        sse: "/sse",
-        messages: "/messages",
       },
     });
   });
@@ -109,32 +98,42 @@ export function buildMcpExpressApp(): Express {
       status: "ok",
       name: "finance-manager-mcp",
       version: "1.0.0",
-      transport: "sse",
-      activeSessions: activeSessions.size,
+      transport: "streamable-http",
     });
   });
 
-  app.get(["/sse", "/api/sse"], authenticateMcpRequest, (req, res) => {
-    handleSseConnection(req as AuthenticatedRequest, res).catch((error) => {
-      console.error("[MCP Server] Error en conexión SSE:", error);
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Fallo al inicializar SSE" });
-      }
-    });
-  });
-
-  app.post(
-    ["/messages", "/api/messages"],
+  // Soporta endpoints estándar /mcp, retrocompatibilidad con /sse y /messages
+  app.all(
+    ["/mcp", "/api/mcp", "/sse", "/api/sse", "/messages", "/api/messages"],
     authenticateMcpRequest,
     (req, res) => {
-      handlePostMessage(req as AuthenticatedRequest, res).catch((error) => {
-        console.error("[MCP Server] Error procesando mensaje POST:", error);
-        if (!res.headersSent) {
-          res.status(500).json({ error: "Fallo al procesar mensaje" });
+      handleStreamableHttpRequest(req as AuthenticatedRequest, res).catch(
+        (error: unknown) => {
+          console.error(
+            "[MCP Server] Error procesando petición Streamable HTTP:",
+            error
+          );
+          if (!res.headersSent) {
+            res.status(500).json({ error: "Fallo al procesar petición MCP" });
+          }
         }
-      });
+      );
     }
   );
+
+  app.post(["/", "/api"], authenticateMcpRequest, (req, res) => {
+    handleStreamableHttpRequest(req as AuthenticatedRequest, res).catch(
+      (error: unknown) => {
+        console.error(
+          "[MCP Server] Error procesando petición MCP en endpoint raíz:",
+          error
+        );
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Fallo al procesar petición MCP" });
+        }
+      }
+    );
+  });
 
   return app;
 }
@@ -142,16 +141,20 @@ export function buildMcpExpressApp(): Express {
 /**
  * Inicializa y levanta el servidor HTTP Express en el puerto configurado.
  */
-export function startSseServer(port: number = ENV_CONFIG.port): void {
+export function startServer(port: number = ENV_CONFIG.port): void {
   const app = buildMcpExpressApp();
 
   app.listen(port, () => {
-    console.log(`🚀 Finance Manager MCP (SSE) escuchando en http://localhost:${port}`);
-    console.log(`📡 Endpoint SSE: http://localhost:${port}/sse`);
-    console.log(`📨 Endpoint Mensajes: http://localhost:${port}/messages`);
+    console.log(`🚀 Finance Manager MCP (Streamable HTTP) en http://localhost:${port}`);
+    console.log(`📡 Endpoint MCP: http://localhost:${port}/mcp`);
     console.log(`🏥 Healthcheck: http://localhost:${port}/health`);
   });
 }
+
+/**
+ * Alias de compatibilidad para código existente que invoque startSseServer.
+ */
+export const startSseServer = startServer;
 
 /**
  * Valida si se debe iniciar el servidor de manera autónoma.
@@ -166,7 +169,6 @@ function shouldAutoStart(): boolean {
   return true;
 }
 
-// Iniciar automáticamente solo cuando no se encuentre en entorno serverless o tests
 if (shouldAutoStart()) {
-  startSseServer();
+  startServer();
 }
