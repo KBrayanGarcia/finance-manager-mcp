@@ -22,12 +22,15 @@ async function handleSseConnection(
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> {
-  // Configurar cabecera de deshabilitación de buffer para streaming SSE en Vercel y proxies inversos
+  // Configurar cabeceras de deshabilitación de buffer para streaming SSE en Vercel y proxies inversos
   res.setHeader("X-Accel-Buffering", "no");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
 
+  const isApiPath = req.path.startsWith("/api");
+  const baseMessagePath = isApiPath ? "/api/messages" : "/messages";
   const messageEndpoint = req.apiToken
-    ? `/messages?token=${encodeURIComponent(req.apiToken)}`
-    : "/messages";
+    ? `${baseMessagePath}?token=${encodeURIComponent(req.apiToken)}`
+    : baseMessagePath;
   const transport = new SSEServerTransport(messageEndpoint, res);
   const sessionId = transport.sessionId;
 
@@ -80,12 +83,15 @@ async function handlePostMessage(
  */
 export function buildMcpExpressApp(): Express {
   // En Vercel / producción se desactiva la restricción de localhost para permitir dominios remotos
-  const isServerless = Boolean(process.env.VERCEL);
-  const app = createMcpExpressApp({ host: isServerless ? "0.0.0.0" : "127.0.0.1" });
+  const isServerless =
+    Boolean(process.env.VERCEL) || process.env.NODE_ENV === "production";
+  const app = createMcpExpressApp({
+    host: isServerless ? "0.0.0.0" : "127.0.0.1",
+  });
 
   app.use(cors());
 
-  app.get("/", (_req, res) => {
+  app.get(["/", "/api"], (_req, res) => {
     res.json({
       name: "finance-manager-mcp",
       status: "online",
@@ -98,7 +104,7 @@ export function buildMcpExpressApp(): Express {
     });
   });
 
-  app.get("/health", (_req, res) => {
+  app.get(["/health", "/api/health"], (_req, res) => {
     res.json({
       status: "ok",
       name: "finance-manager-mcp",
@@ -108,7 +114,7 @@ export function buildMcpExpressApp(): Express {
     });
   });
 
-  app.get("/sse", authenticateMcpRequest, (req, res) => {
+  app.get(["/sse", "/api/sse"], authenticateMcpRequest, (req, res) => {
     handleSseConnection(req as AuthenticatedRequest, res).catch((error) => {
       console.error("[MCP Server] Error en conexión SSE:", error);
       if (!res.headersSent) {
@@ -117,14 +123,18 @@ export function buildMcpExpressApp(): Express {
     });
   });
 
-  app.post("/messages", authenticateMcpRequest, (req, res) => {
-    handlePostMessage(req as AuthenticatedRequest, res).catch((error) => {
-      console.error("[MCP Server] Error procesando mensaje POST:", error);
-      if (!res.headersSent) {
-        res.status(500).json({ error: "Fallo al procesar mensaje" });
-      }
-    });
-  });
+  app.post(
+    ["/messages", "/api/messages"],
+    authenticateMcpRequest,
+    (req, res) => {
+      handlePostMessage(req as AuthenticatedRequest, res).catch((error) => {
+        console.error("[MCP Server] Error procesando mensaje POST:", error);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Fallo al procesar mensaje" });
+        }
+      });
+    }
+  );
 
   return app;
 }

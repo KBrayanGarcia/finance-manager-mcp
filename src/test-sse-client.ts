@@ -27,6 +27,8 @@ function resolveClientOptions(): SseClientOptions {
       i++;
     } else if (arg.startsWith("--token=")) {
       customToken = arg.slice(8);
+    } else if (arg.startsWith("http://") || arg.startsWith("https://")) {
+      customUrl = arg;
     }
   }
 
