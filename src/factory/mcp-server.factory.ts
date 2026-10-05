@@ -5,6 +5,10 @@ import { registerCreateIncomeTool } from "../tools/create-income.tool.js";
 import { registerGetAccountBalancesTool } from "../tools/get-account-balances.tool.js";
 import { registerListTransactionsTool } from "../tools/list-transactions.tool.js";
 import { registerTransferFundsTool } from "../tools/transfer-funds.tool.js";
+import { registerListCategoriesTool } from "../tools/list-categories.tool.js";
+import { registerCreateCategoryTool } from "../tools/create-category.tool.js";
+import { registerUpdateCategoryTool } from "../tools/update-category.tool.js";
+import { registerDeleteCategoryTool } from "../tools/delete-category.tool.js";
 
 export interface McpServerOptions {
   readonly name?: string;
@@ -29,6 +33,10 @@ export function createMcpServer(
   registerCreateExpenseTool(server, apiClient);
   registerCreateIncomeTool(server, apiClient);
   registerTransferFundsTool(server, apiClient);
+  registerListCategoriesTool(server, apiClient);
+  registerCreateCategoryTool(server, apiClient);
+  registerUpdateCategoryTool(server, apiClient);
+  registerDeleteCategoryTool(server, apiClient);
 
   return server;
 }

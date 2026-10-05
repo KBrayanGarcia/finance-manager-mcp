@@ -1,7 +1,12 @@
 import axios, { isAxiosError, type AxiosInstance } from "axios";
 import { ENV_CONFIG } from "../config/env.config.js";
 import type { Account } from "../types/account.interface.js";
-import type { Category, CategoryType } from "../types/category.interface.js";
+import type {
+  Category,
+  CategoryType,
+  CreateCategoryPayload,
+  UpdateCategoryPayload,
+} from "../types/category.interface.js";
 import type {
   CreateTransactionPayload,
   Transaction,
@@ -96,6 +101,66 @@ export class ApiClientService {
     } catch (error: unknown) {
       throw new Error(
         this.formatErrorMessage(error, "Fallo al consultar las categorías")
+      );
+    }
+  }
+
+  /**
+   * Crea una nueva categoría personal para el usuario autenticado.
+   */
+  async createCategory(payload: CreateCategoryPayload): Promise<Category> {
+    const token = this.getValidToken();
+
+    try {
+      const response = await this.client.post<Category>(
+        "/categories",
+        payload,
+        { headers: { "X-API-KEY": token, Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al crear la categoría")
+      );
+    }
+  }
+
+  /**
+   * Actualiza parcialmente una categoría existente.
+   */
+  async updateCategory(
+    id: string,
+    payload: UpdateCategoryPayload
+  ): Promise<Category> {
+    const token = this.getValidToken();
+
+    try {
+      const response = await this.client.patch<Category>(
+        `/categories/${id}`,
+        payload,
+        { headers: { "X-API-KEY": token, Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al actualizar la categoría")
+      );
+    }
+  }
+
+  /**
+   * Elimina (desactiva) una categoría existente.
+   */
+  async deleteCategory(id: string): Promise<void> {
+    const token = this.getValidToken();
+
+    try {
+      await this.client.delete(`/categories/${id}`, {
+        headers: { "X-API-KEY": token, Authorization: `Bearer ${token}` },
+      });
+    } catch (error: unknown) {
+      throw new Error(
+        this.formatErrorMessage(error, "Fallo al eliminar la categoría")
       );
     }
   }
