@@ -17,7 +17,12 @@
     "test:sse": "tsx src/test-sse-client.ts",
     "test:sse:remote": "tsx src/test-sse-client.ts --url",
     "inspector": "npx @modelcontextprotocol/inspector node dist/src/index.js",
-    "inspector:sse": "npx @modelcontextprotocol/inspector"
+    "inspector:sse": "npx @modelcontextprotocol/inspector",
+    "release": "commit-and-tag-version",
+    "release:dry": "commit-and-tag-version --dry-run",
+    "release:patch": "commit-and-tag-version --release-as patch",
+    "release:minor": "commit-and-tag-version --release-as minor",
+    "release:major": "commit-and-tag-version --release-as major"
   },
   "keywords": [
     "mcp",
@@ -38,6 +43,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^22.20.2",
+    "commit-and-tag-version": "^13.2.2",
     "tsx": "^4.23.13",
     "typescript": "^5.4.5"
   }
