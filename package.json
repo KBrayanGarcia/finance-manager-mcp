@@ -1,6 +1,6 @@
 {
   "name": "finance-manager-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "Servidor MCP para Finance Manager Suite",
   "main": "dist/src/index.js",
